@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GP AutoTrack — Automated Time Capture</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --surface: #111318;
+    --surface2: #181c23;
+    --surface3: #1e2330;
+    --border: #252a35;
+    --border2: #2e3545;
+    --accent: #a3e635;
+    --accent2: #84cc16;
+    --accent-dim: rgba(163,230,53,0.12);
+    --accent-glow: rgba(163,230,53,0.25);
+    --text: #f0f4ff;
+    --text2: #8892a4;
+    --text3: #4a5568;
+    --blue: #60a5fa;
+    --blue-dim: rgba(96,165,250,0.12);
+    --orange: #fb923c;
+    --orange-dim: rgba(251,146,60,0.12);
+    --red: #f87171;
+    --red-dim: rgba(248,113,113,0.12);
+    --purple: #c084fc;
+    --purple-dim: rgba(192,132,252,0.12);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── LOGIN SCREEN ── */
+  #login-screen {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg);
+    z-index: 1000;
+    transition: opacity 0.5s, transform 0.5s;
+  }
+  #login-screen.hidden { opacity: 0; pointer-events: none; transform: scale(1.04); }
+
+  .login-bg {
+    position: absolute; inset: 0; overflow: hidden;
+  }
+  .login-bg::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(163,230,53,0.08) 0%, transparent 70%);
+    top: -100px; left: -100px;
+  }
+  .login-bg::after {
+    content: '';
+    position: absolute;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(96,165,250,0.06) 0%, transparent 70%);
+    bottom: -50px; right: -50px;
+  }
+
+  .login-card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px;
+    width: 420px;
+    box-shadow: var(--shadow), 0 0 80px rgba(163,230,53,0.05);
+  }
+
+  .login-logo {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 36px;
+  }
+  .login-logo-icon {
+    width: 44px; height: 44px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: #0a0c0f; font-weight: 800;
+  }
+  .login-logo-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px; font-weight: 800;
+    color: var(--text);
+  }
+  .login-logo-text span { color: var(--accent); }
+
+  .login-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px; font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .login-sub {
+    color: var(--text2);
+    font-size: 14px;
+    margin-bottom: 32px;
+    line-height: 1.5;
+  }
+
+  .form-group { margin-bottom: 18px; }
+  .form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text2);
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .form-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .form-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+  }
+
+  .btn-primary {
+    width: 100%;
+    background: var(--accent);
+    color: #0a0c0f;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+    letter-spacing: 0.02em;
+  }
+  .btn-primary:hover {
+    background: var(--accent2);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px var(--accent-glow);
+  }
+
+  .ms-btn {
+    width: 100%;
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 12px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .ms-btn:hover { border-color: var(--blue); background: var(--blue-dim); }
+
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 20px 0;
+    color: var(--text3);
+    font-size: 13px;
+  }
+  .divider::before, .divider::after {
+    content: ''; flex: 1;
+    height: 1px; background: var(--border);
+  }
+
+  /* ── APP SHELL ── */
+  #app { display: none; min-height: 100vh; }
+  #app.visible { display: flex; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 240px; min-height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 24px 0;
+    position: fixed; left: 0; top: 0; bottom: 0;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 24px 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .sidebar-logo-icon {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: #0a0c0f; font-weight: 800;
+  }
+  .sidebar-logo-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px; font-weight: 800;
+  }
+  .sidebar-logo-text span { color: var(--accent); }
+
+  .nav-section {
+    padding: 0 12px;
+    margin-bottom: 8px;
+  }
+  .nav-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0 12px;
+    margin-bottom: 6px;
+    margin-top: 16px;
+  }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text2);
+    text-decoration: none;
+    position: relative;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active {
+    background: var(--accent-dim);
+    color: var(--accent);
+  }
+  .nav-item.active i { color: var(--accent); }
+  .nav-item i { width: 18px; text-align: center; font-size: 15px; }
+
+  .nav-badge {
+    margin-left: auto;
+    background: var(--accent);
+    color: #0a0c0f;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+  }
+  .user-card {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .user-avatar {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--blue));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: #0a0c0f;
+  }
+  .user-name { font-size: 13px; font-weight: 500; }
+  .user-role { font-size: 11px; color: var(--text2); }
+
+  /* ── MAIN CONTENT ── */
+  .main {
+    margin-left: 240px;
+    flex: 1;
+    padding: 32px;
+    min-height: 100vh;
+  }
+
+  /* ── PAGES ── */
+  .page { display: none; }
+  .page.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 32px;
+  }
+  .page-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px; font-weight: 800;
+  }
+  .page-subtitle { font-size: 14px; color: var(--text2); margin-top: 2px; }
+
+  .topbar-actions { display: flex; gap: 12px; align-items: center; }
+
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--text);
+    border-radius: var(--radius-sm);
+    padding: 9px 18px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn-accent {
+    background: var(--accent);
+    color: #0a0c0f;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 9px 18px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .btn-accent:hover {
+    background: var(--accent2);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px var(--accent-glow);
+  }
+
+  /* ── STAT CARDS ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .stat-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    opacity: 0.06;
+    transform: translate(20px, -20px);
+  }
+  .stat-card.green::before { background: var(--accent); }
+  .stat-card.blue::before { background: var(--blue); }
+  .stat-card.orange::before { background: var(--orange); }
+  .stat-card.purple::before { background: var(--purple); }
+
+  .stat-icon {
+    width: 36px; height: 36px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    margin-bottom: 14px;
+  }
+  .stat-icon.green { background: var(--accent-dim); color: var(--accent); }
+  .stat-icon.blue { background: var(--blue-dim); color: var(--blue); }
+  .stat-icon.orange { background: var(--orange-dim); color: var(--orange); }
+  .stat-icon.purple { background: var(--purple-dim); color: var(--purple); }
+
+  .stat-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px; font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-label { font-size: 12px; color: var(--text2); font-weight: 500; }
+  .stat-change {
+    font-size: 12px;
+    margin-top: 8px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .stat-change.up { color: var(--accent); }
+  .stat-change.down { color: var(--red); }
+
+  /* ── ACTIVITY FEED ── */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px; font-weight: 700;
+  }
+  .card-subtitle { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .card-action {
+    font-size: 12px; color: var(--accent);
+    cursor: pointer; font-weight: 500;
+    background: none; border: none;
+  }
+  .card-action:hover { text-decoration: underline; }
+
+  /* ── TIME ENTRIES ── */
+  .entry-list { padding: 8px; }
+
+  .entry-item {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 14px 12px;
+    border-radius: var(--radius-sm);
+    transition: background 0.15s;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .entry-item:last-child { border-bottom: none; }
+  .entry-item:hover { background: var(--surface2); }
+  .entry-item.approved { opacity: 0.5; }
+  .entry-item.dismissed { opacity: 0.3; text-decoration: line-through; }
+
+  .entry-type-icon {
+    width: 36px; height: 36px; min-width: 36px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    margin-top: 2px;
+  }
+
+  .entry-body { flex: 1; min-width: 0; }
+  .entry-title {
+    font-size: 14px; font-weight: 500;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-bottom: 4px;
+  }
+  .entry-meta {
+    font-size: 12px; color: var(--text2);
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .entry-matter {
+    background: var(--surface3);
+    border: 1px solid var(--border2);
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    color: var(--text2);
+  }
+
+  .entry-right {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+    min-width: 100px;
+  }
+  .entry-duration {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px; font-weight: 700;
+    color: var(--accent);
+  }
+  .entry-actions { display: flex; gap: 6px; }
+
+  .btn-icon {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text2);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.15s;
+  }
+  .btn-icon:hover.approve { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+  .btn-icon:hover.dismiss { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+  .btn-icon:hover.edit { background: var(--blue-dim); border-color: var(--blue); color: var(--blue); }
+
+  /* ── MINI TIMELINE ── */
+  .timeline { padding: 12px 20px; }
+  .timeline-item {
+    display: flex; gap: 14px;
+    padding: 10px 0;
+    position: relative;
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 15px; top: 32px; bottom: -10px;
+    width: 1px;
+    background: var(--border);
+  }
+  .timeline-item:last-child::before { display: none; }
+
+  .timeline-dot {
+    width: 30px; height: 30px; min-width: 30px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  .timeline-content { flex: 1; }
+  .timeline-time { font-size: 11px; color: var(--text3); margin-bottom: 2px; }
+  .timeline-desc { font-size: 13px; font-weight: 500; }
+  .timeline-client { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  /* ── BILLING PAGE ── */
+  .billing-header {
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .billing-header::before {
+    content: '';
+    position: absolute;
+    right: -40px; top: -40px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, var(--accent-dim) 0%, transparent 70%);
+  }
+  .billing-amount {
+    font-family: 'Syne', sans-serif;
+    font-size: 48px; font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    margin: 8px 0;
+  }
+  .billing-period { font-size: 13px; color: var(--text2); }
+
+  .billing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  /* ── SYNC PAGE ── */
+  .sync-status {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .sync-icon {
+    width: 72px; height: 72px;
+    background: var(--accent-dim);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; color: var(--accent);
+    margin: 0 auto 16px;
+  }
+  .sync-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px; font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .sync-sub { font-size: 14px; color: var(--text2); margin-bottom: 24px; }
+
+  .sync-entries {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .sync-entry {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sync-entry:last-child { border-bottom: none; }
+  .sync-check {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+  }
+  .sync-check.pending { background: var(--orange-dim); color: var(--orange); }
+  .sync-check.synced { background: var(--accent-dim); color: var(--accent); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 14px 20px;
+    font-size: 14px;
+    display: flex; align-items: center; gap: 10px;
+    box-shadow: var(--shadow);
+    z-index: 9999;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast i { color: var(--accent); }
+
+  /* ── PROGRESS BAR ── */
+  .progress-bar {
+    height: 6px;
+    background: var(--surface3);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 10px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--accent);
+    transition: width 1s ease;
+  }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 500;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.show { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    padding: 28px;
+    width: 480px;
+    box-shadow: var(--shadow);
+    transform: scale(0.96);
+    transition: transform 0.2s;
+  }
+  .modal-overlay.show .modal { transform: scale(1); }
+
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px; font-weight: 700;
+    margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+
+  .btn-cancel {
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    border-radius: var(--radius-sm);
+    padding: 9px 18px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-cancel:hover { border-color: var(--text2); color: var(--text); }
+
+  .form-select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    margin-bottom: 14px;
+    appearance: none;
+  }
+  .form-select:focus { border-color: var(--accent); }
+
+  .form-textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    resize: vertical;
+    min-height: 80px;
+  }
+  .form-textarea:focus { border-color: var(--accent); }
+
+  /* ── CHIP ── */
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .chip.live { background: var(--accent-dim); color: var(--accent); }
+  .chip.live::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* ── INTEGRATION STATUS ── */
+  .integrations-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 16px 20px;
+  }
+  .integration-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+  .integration-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .integration-name { font-size: 13px; font-weight: 500; }
+  .integration-status { font-size: 11px; color: var(--text2); }
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-left: auto;
+  }
+  .status-dot.connected { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  .status-dot.warning { background: var(--orange); }
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-bg"></div>
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">GP</div>
+      <div class="login-logo-text">Auto<span>Track</span></div>
+    </div>
+    <div class="login-title">Welcome back</div>
+    <div class="login-sub">Automated time capture for Ghost Practice. Sign in to review your captured activities.</div>
+
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <input class="form-input" type="email" value="sarah.attorney@mb.co.za" placeholder="you@mb.co.za">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input class="form-input" type="password" value="••••••••" placeholder="••••••••">
+    </div>
+    <button class="btn-primary" onclick="doLogin()">
+      <i class="fas fa-arrow-right"></i> Sign In
+    </button>
+
+    <div class="divider">or</div>
+
+    <button class="ms-btn" onclick="doLogin()">
+      <svg width="18" height="18" viewBox="0 0 21 21" fill="none">
+        <rect width="10" height="10" fill="#F25022"/>
+        <rect x="11" width="10" height="10" fill="#7FBA00"/>
+        <rect y="11" width="10" height="10" fill="#00A4EF"/>
+        <rect x="11" y="11" width="10" height="10" fill="#FFB900"/>
+      </svg>
+      Continue with Microsoft 365
+    </button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">GP</div>
+      <div class="sidebar-logo-text">Auto<span>Track</span></div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Main</div>
+      <div class="nav-item active" onclick="showPage('dashboard', this)">
+        <i class="fas fa-gauge-high"></i> Dashboard
+      </div>
+      <div class="nav-item" onclick="showPage('entries', this)">
+        <i class="fas fa-clock"></i> Time Entries
+        <span class="nav-badge" id="badge-entries">7</span>
+      </div>
+      <div class="nav-item" onclick="showPage('billing', this)">
+        <i class="fas fa-file-invoice-dollar"></i> Billing
+      </div>
+      <div class="nav-item" onclick="showPage('sync', this)">
+        <i class="fas fa-rotate"></i> GP Sync
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Settings</div>
+      <div class="nav-item" onclick="showPage('integrations', this)">
+        <i class="fas fa-plug"></i> Integrations
+      </div>
+      <div class="nav-item" onclick="showPage('matters', this)">
+        <i class="fas fa-briefcase"></i> Matters
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">SA</div>
+        <div>
+          <div class="user-name">Sarah Attorneys</div>
+          <div class="user-role">Senior Associate</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page active" id="page-dashboard">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Good morning, Sarah 👋</div>
+          <div class="page-subtitle">Tuesday, 29 April 2026 · <span class="chip live">Tracking Active</span></div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn-outline" onclick="showPage('entries', document.querySelector('[onclick*=entries]'))">
+            <i class="fas fa-check"></i> Review Entries
+          </button>
+          <button class="btn-accent" onclick="showPage('sync', document.querySelector('[onclick*=sync]'))">
+            <i class="fas fa-rotate"></i> Sync to GP
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card green">
+          <div class="stat-icon green"><i class="fas fa-clock"></i></div>
+          <div class="stat-value">6.2h</div>
+          <div class="stat-label">Hours Captured Today</div>
+          <div class="stat-change up"><i class="fas fa-arrow-up"></i> +1.4h vs yesterday</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon blue"><i class="fas fa-list-check"></i></div>
+          <div class="stat-value">12</div>
+          <div class="stat-label">Activities Captured</div>
+          <div class="stat-change up"><i class="fas fa-arrow-up"></i> 7 pending review</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-icon orange"><i class="fas fa-coins"></i></div>
+          <div class="stat-value">R21,700</div>
+          <div class="stat-label">Est. Billable Today</div>
+          <div class="stat-change up"><i class="fas fa-arrow-up"></i> vs R14,000 manual avg</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-icon purple"><i class="fas fa-chart-line"></i></div>
+          <div class="stat-value">R318k</div>
+          <div class="stat-label">MTD Billable</div>
+          <div class="stat-change up"><i class="fas fa-arrow-up"></i> 23% above target</div>
+        </div>
+      </div>
+
+      <!-- Activity Feed + Timeline -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Today's Captured Activities</div>
+              <div class="card-subtitle">Auto-detected from Outlook, Teams & Word</div>
+            </div>
+            <button class="card-action" onclick="showPage('entries', document.querySelector('[onclick*=entries]'))">Review all →</button>
+          </div>
+          <div class="entry-list" id="dashboard-entries">
+            <!-- populated by JS -->
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Activity Timeline</div>
+              <div class="card-subtitle">Chronological view</div>
+            </div>
+          </div>
+          <div class="timeline" id="timeline">
+            <!-- populated by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TIME ENTRIES PAGE -->
+    <div class="page" id="page-entries">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Time Entries</div>
+          <div class="page-subtitle">Review and approve auto-captured activities</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn-outline" onclick="approveAll()">
+            <i class="fas fa-check-double"></i> Approve All
+          </button>
+          <button class="btn-accent" onclick="showPage('sync', document.querySelector('[onclick*=sync]'))">
+            <i class="fas fa-rotate"></i> Sync Approved
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Pending Review</div>
+            <div class="card-subtitle" id="entries-subtitle">7 entries need your approval</div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <span style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;">
+              <span style="width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block;"></span>Approved
+              <span style="width:8px;height:8px;border-radius:50%;background:var(--orange);display:inline-block;margin-left:6px;"></span>Pending
+            </span>
+          </div>
+        </div>
+        <div class="entry-list" id="full-entries">
+          <!-- populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- BILLING PAGE -->
+    <div class="page" id="page-billing">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Billing Summary</div>
+          <div class="page-subtitle">April 2026 · Ready for Ghost Practice invoicing</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn-outline"><i class="fas fa-download"></i> Export</button>
+          <button class="btn-accent"><i class="fas fa-file-invoice"></i> Generate Invoice</button>
+        </div>
+      </div>
+
+      <div class="billing-header">
+        <div style="font-size:13px;color:var(--text2);">Total Billable — April 2026</div>
+        <div class="billing-amount">R318,450</div>
+        <div class="billing-period">Based on 91.0 hours captured · 28 working days</div>
+        <div class="progress-bar" style="margin-top:16px;">
+          <div class="progress-fill" style="width:77%;"></div>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-top:6px;">77% of monthly target (R412,000)</div>
+      </div>
+
+      <div class="billing-grid">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">By Activity Type</div>
+          </div>
+          <div style="padding:16px 20px;">
+            <div id="billing-by-type"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Top Matters</div>
+          </div>
+          <div style="padding:16px 20px;">
+            <div id="billing-by-matter"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Weekly Trend</div>
+          </div>
+          <div style="padding:16px 20px;">
+            <div id="weekly-trend"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SYNC PAGE -->
+    <div class="page" id="page-sync">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Ghost Practice Sync</div>
+          <div class="page-subtitle">Push approved time entries directly into GP</div>
+        </div>
+      </div>
+
+      <div class="sync-status" id="sync-status-card">
+        <div class="sync-icon"><i class="fas fa-rotate"></i></div>
+        <div class="sync-title">5 Entries Ready to Sync</div>
+        <div class="sync-sub">These approved entries will be pushed into Ghost Practice as time entries, linked to their respective matters.</div>
+        <button class="btn-accent" style="display:inline-flex;" onclick="doSync()">
+          <i class="fas fa-rotate"></i> Sync to Ghost Practice Now
+        </button>
+      </div>
+
+      <div class="sync-entries" id="sync-entries-list">
+        <!-- populated by JS -->
+      </div>
+    </div>
+
+    <!-- INTEGRATIONS PAGE -->
+    <div class="page" id="page-integrations">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Integrations</div>
+          <div class="page-subtitle">Connected tools and data sources</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header">
+          <div class="card-title">Microsoft 365</div>
+          <div class="card-subtitle">Connected as sarah.attorney@mb.co.za</div>
+        </div>
+        <div class="integrations-grid">
+          <div class="integration-item">
+            <div class="integration-icon" style="background:#0078d4;color:white;"><i class="fas fa-envelope"></i></div>
+            <div>
+              <div class="integration-name">Outlook Email</div>
+              <div class="integration-status">Monitoring sent & received</div>
+            </div>
+            <div class="status-dot connected"></div>
+          </div>
+          <div class="integration-item">
+            <div class="integration-icon" style="background:#444;color:#60a5fa;"><i class="fas fa-calendar"></i></div>
+            <div>
+              <div class="integration-name">Calendar</div>
+              <div class="integration-status">Tracking meetings</div>
+            </div>
+            <div class="status-dot connected"></div>
+          </div>
+          <div class="integration-item">
+            <div class="integration-icon" style="background:#444;color:#c084fc;"><i class="fab fa-microsoft"></i></div>
+            <div>
+              <div class="integration-name">Teams Calls</div>
+              <div class="integration-status">Call duration tracking</div>
+            </div>
+            <div class="status-dot connected"></div>
+          </div>
+          <div class="integration-item">
+            <div class="integration-icon" style="background:#444;color:#fb923c;"><i class="fas fa-file-word"></i></div>
+            <div>
+              <div class="integration-name">Word / OneDrive</div>
+              <div class="integration-status">Document editing time</div>
+            </div>
+            <div class="status-dot connected"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Ghost Practice</div>
+          <div class="card-subtitle">Target system for time entry sync</div>
+        </div>
+        <div class="integrations-grid">
+          <div class="integration-item" style="grid-column:span 2;">
+            <div class="integration-icon" style="background:var(--accent-dim);color:var(--accent);font-family:'Syne',sans-serif;font-weight:800;font-size:13px;">GP</div>
+            <div>
+              <div class="integration-name">Ghost Practice — MB Houghton</div>
+              <div class="integration-status">Sync via Office365 bridge · Last sync: today 08:30</div>
+            </div>
+            <div class="status-dot connected"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MATTERS PAGE -->
+    <div class="page" id="page-matters">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Client Matters</div>
+          <div class="page-subtitle">Auto-matched from Ghost Practice</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn-accent"><i class="fas fa-plus"></i> Add Matter</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Active Matters</div>
+          <div class="card-subtitle">Linked to email addresses for auto-matching</div>
+        </div>
+        <div style="padding:8px;" id="matters-list"></div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-title"><i class="fas fa-pen" style="color:var(--blue);"></i> Edit Time Entry</div>
+    <label class="form-label">Matter</label>
+    <select class="form-select" id="modal-matter">
+      <option>Dlamini v Nkosi — Contract Dispute</option>
+      <option>Mokoena Acquisition — M&A</option>
+      <option>Sithole Estate — Deceased Estate</option>
+      <option>Pretoria Municipality — Compliance</option>
+      <option>General / Admin</option>
+    </select>
+    <label class="form-label">Duration</label>
+    <input class="form-input" id="modal-duration" type="text" value="0h 45m" style="margin-bottom:14px;">
+    <label class="form-label">Description</label>
+    <textarea class="form-textarea" id="modal-desc"></textarea>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-accent" onclick="saveEdit()"><i class="fas fa-check"></i> Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <i class="fas fa-check-circle"></i>
+  <span id="toast-msg">Entry approved</span>
+</div>
+
+<script>
+// ── DATA ──
+const entries = [
+  { id:1, type:'email', icon:'fas fa-envelope', color:'blue', title:'Email: Re: Draft Contract — Dlamini v Nkosi', matter:'Dlamini v Nkosi', duration:'0h 18m', time:'07:52', amount:1050, status:'pending', desc:'Reviewed and responded to opposing counsel email regarding contract terms.' },
+  { id:2, type:'meeting', icon:'fas fa-video', color:'purple', title:'Teams Meeting: M&A Strategy — Mokoena Acquisition', matter:'Mokoena Acquisition', duration:'1h 30m', time:'08:30', amount:5250, status:'pending', desc:'Strategy meeting with client re: due diligence findings and acquisition timeline.' },
+  { id:3, type:'document', icon:'fas fa-file-lines', color:'orange', title:'Drafted: Settlement Agreement — Sithole Estate', matter:'Sithole Estate', duration:'2h 05m', time:'10:15', amount:7292, status:'pending', desc:'Drafted settlement agreement for estate distribution between beneficiaries.' },
+  { id:4, type:'call', icon:'fas fa-phone', color:'green', title:'Call: Client Update — Dlamini v Nkosi', matter:'Dlamini v Nkosi', duration:'0h 22m', time:'12:40', amount:1283, status:'approved', desc:'Telephonic update to client on case progress and next steps.' },
+  { id:5, type:'email', icon:'fas fa-envelope', color:'blue', title:'Email Thread: Compliance Docs — Pretoria Municipality', matter:'Pretoria Municipality', duration:'0h 35m', time:'13:05', amount:2042, status:'pending', desc:'Reviewed and responded to 4 emails re: compliance documentation requirements.' },
+  { id:6, type:'document', icon:'fas fa-file-lines', color:'orange', title:'Reviewed: Due Diligence Report — Mokoena Acquisition', matter:'Mokoena Acquisition', duration:'1h 10m', time:'14:00', amount:4083, status:'pending', desc:'Reviewed 47-page due diligence report, annotated key risk areas.' },
+  { id:7, type:'meeting', icon:'fas fa-users', color:'purple', title:'Teams Meeting: Internal Team Briefing', matter:'General / Admin', duration:'0h 45m', time:'15:30', amount:2625, status:'pending', desc:'Weekly internal team update and matter status briefings.' },
+  { id:8, type:'call', icon:'fas fa-phone', color:'green', title:'Call: Urgent — Sithole Beneficiary Query', matter:'Sithole Estate', duration:'0h 28m', time:'16:15', amount:1633, status:'approved', desc:'Urgent call from beneficiary re: distribution timeline concerns.' },
+  { id:9, type:'document', icon:'fas fa-file-lines', color:'orange', title:'Drafted: Cover Letter — Pretoria Municipality', matter:'Pretoria Municipality', duration:'0h 25m', time:'16:50', amount:1458, status:'approved', desc:'Drafted formal cover letter for compliance submission.' },
+];
+
+const matters = [
+  { name:'Dlamini v Nkosi', type:'Contract Dispute', client:'T. Dlamini', email:'t.dlamini@email.co.za', rate:3500 },
+  { name:'Mokoena Acquisition', type:'Mergers & Acquisitions', client:'Mokoena Group', email:'legal@mokoenagroup.co.za', rate:3500 },
+  { name:'Sithole Estate', type:'Deceased Estate', client:'Sithole Family', email:'sithole.estate@gmail.com', rate:3500 },
+  { name:'Pretoria Municipality', type:'Regulatory Compliance', client:'Pretoria Municipality', email:'legal@pretoriacity.gov.za', rate:3500 },
+];
+
+const colorMap = { blue:'var(--blue)', purple:'var(--purple)', orange:'var(--orange)', green:'var(--accent)' };
+const bgMap = { blue:'var(--blue-dim)', purple:'var(--purple-dim)', orange:'var(--orange-dim)', green:'var(--accent-dim)' };
+
+// ── RENDER ──
+function renderDashboardEntries() {
+  const el = document.getElementById('dashboard-entries');
+  el.innerHTML = entries.slice(0,5).map(e => entryHTML(e, true)).join('');
+}
+
+function renderFullEntries() {
+  const el = document.getElementById('full-entries');
+  const pending = entries.filter(e=>e.status==='pending').length;
+  document.getElementById('entries-subtitle').textContent = `${pending} entr${pending===1?'y':'ies'} need your approval`;
+  document.getElementById('badge-entries').textContent = pending;
+  el.innerHTML = entries.map(e => entryHTML(e, false)).join('');
+}
+
+function entryHTML(e, compact) {
+  return `
+  <div class="entry-item ${e.status}" id="entry-${e.id}">
+    <div class="entry-type-icon" style="background:${bgMap[e.color]};color:${colorMap[e.color]};">
+      <i class="${e.icon}"></i>
+    </div>
+    <div class="entry-body">
+      <div class="entry-title">${e.title}</div>
+      <div class="entry-meta">
+        <span>${e.time}</span>
+        <span class="entry-matter">${e.matter}</span>
+        ${!compact ? `<span style="color:var(--accent);font-weight:500;">R${e.amount.toLocaleString()}</span>` : ''}
+      </div>
+    </div>
+    <div class="entry-right">
+      <div class="entry-duration">${e.duration}</div>
+      ${e.status === 'pending' ? `
+      <div class="entry-actions">
+        <button class="btn-icon approve" onclick="approveEntry(${e.id})" title="Approve"><i class="fas fa-check"></i></button>
+        <button class="btn-icon edit" onclick="editEntry(${e.id})" title="Edit"><i class="fas fa-pen"></i></button>
+        <button class="btn-icon dismiss" onclick="dismissEntry(${e.id})" title="Dismiss"><i class="fas fa-xmark"></i></button>
+      </div>` : `
+      <span style="font-size:11px;color:var(--accent);font-weight:600;text-transform:uppercase;">${e.status === 'approved' ? '✓ Approved' : 'Dismissed'}</span>
+      `}
+    </div>
+  </div>`;
+}
+
+function renderTimeline() {
+  const el = document.getElementById('timeline');
+  const sorted = [...entries].slice(0,6);
+  el.innerHTML = sorted.map(e => `
+    <div class="timeline-item">
+      <div class="timeline-dot" style="background:${bgMap[e.color]};color:${colorMap[e.color]};">
+        <i class="${e.icon}" style="font-size:11px;"></i>
+      </div>
+      <div class="timeline-content">
+        <div class="timeline-time">${e.time}</div>
+        <div class="timeline-desc">${e.type.charAt(0).toUpperCase()+e.type.slice(1)} · ${e.duration}</div>
+        <div class="timeline-client">${e.matter}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderBilling() {
+  const byType = { email:0, meeting:0, document:0, call:0 };
+  const byMatter = {};
+  entries.forEach(e => {
+    if(e.status !== 'dismissed') {
+      byType[e.type] = (byType[e.type]||0) + e.amount;
+      byMatter[e.matter] = (byMatter[e.matter]||0) + e.amount;
+    }
+  });
+
+  document.getElementById('billing-by-type').innerHTML = Object.entries(byType).map(([k,v]) => `
+    <div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+        <span style="color:var(--text2);text-transform:capitalize;">${k}s</span>
+        <span style="font-weight:600;">R${v.toLocaleString()}</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width:${Math.round(v/250)}%;"></div>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('billing-by-matter').innerHTML = Object.entries(byMatter).slice(0,4).map(([k,v]) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+      <span style="color:var(--text2);">${k}</span>
+      <span style="font-weight:600;color:var(--accent);">R${v.toLocaleString()}</span>
+    </div>
+  `).join('');
+
+  const weeks = [
+    {w:'Week 1', h:18.5, r:64750},
+    {w:'Week 2', h:22.0, r:77000},
+    {w:'Week 3', h:24.5, r:85750},
+    {w:'Week 4', h:26.0, r:90950},
+  ];
+  document.getElementById('weekly-trend').innerHTML = weeks.map(w => `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <span style="font-size:12px;color:var(--text2);width:50px;">${w.w}</span>
+      <div style="flex:1;height:20px;background:var(--surface3);border-radius:4px;overflow:hidden;">
+        <div style="height:100%;width:${Math.round(w.h/0.26)}%;background:var(--accent);border-radius:4px;display:flex;align-items:center;padding-left:8px;">
+          <span style="font-size:10px;color:#0a0c0f;font-weight:700;">${w.h}h</span>
+        </div>
+      </div>
+      <span style="font-size:12px;font-weight:600;width:65px;text-align:right;">R${w.r.toLocaleString()}</span>
+    </div>
+  `).join('');
+}
+
+function renderSync() {
+  const approved = entries.filter(e => e.status === 'approved');
+  document.getElementById('sync-status-card').querySelector('.sync-title').textContent = `${approved.length} Entries Ready to Sync`;
+  document.getElementById('sync-entries-list').innerHTML = approved.map(e => `
+    <div class="sync-entry">
+      <div class="sync-check pending"><i class="fas fa-clock"></i></div>
+      <div class="entry-type-icon" style="background:${bgMap[e.color]};color:${colorMap[e.color]};width:32px;height:32px;min-width:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;">
+        <i class="${e.icon}" style="font-size:13px;"></i>
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:500;">${e.title}</div>
+        <div style="font-size:11px;color:var(--text2);">${e.matter} · ${e.duration}</div>
+      </div>
+      <div style="font-weight:700;color:var(--accent);font-size:14px;">R${e.amount.toLocaleString()}</div>
+    </div>
+  `).join('') || '<div style="padding:24px;text-align:center;color:var(--text2);">No approved entries yet. Go to Time Entries to approve your activities.</div>';
+}
+
+function renderMatters() {
+  document.getElementById('matters-list').innerHTML = matters.map(m => `
+    <div class="entry-item">
+      <div class="entry-type-icon" style="background:var(--accent-dim);color:var(--accent);">
+        <i class="fas fa-briefcase"></i>
+      </div>
+      <div class="entry-body">
+        <div class="entry-title">${m.name}</div>
+        <div class="entry-meta">
+          <span>${m.type}</span>
+          <span class="entry-matter">${m.client}</span>
+          <span style="font-size:11px;">${m.email}</span>
+        </div>
+      </div>
+      <div class="entry-right">
+        <div style="font-size:12px;color:var(--text2);">R${m.rate.toLocaleString()}/hr</div>
+        <span style="font-size:11px;color:var(--accent);font-weight:600;">● Active</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── ACTIONS ──
+let editingId = null;
+
+function approveEntry(id) {
+  const entry = entries.find(e => e.id === id);
+  if(entry) {
+    entry.status = 'approved';
+    showToast('Entry approved — will sync to Ghost Practice');
+    renderDashboardEntries();
+    renderFullEntries();
+    renderSync();
+  }
+}
+
+function dismissEntry(id) {
+  const entry = entries.find(e => e.id === id);
+  if(entry) {
+    entry.status = 'dismissed';
+    showToast('Entry dismissed');
+    renderDashboardEntries();
+    renderFullEntries();
+    renderSync();
+  }
+}
+
+function editEntry(id) {
+  editingId = id;
+  const entry = entries.find(e => e.id === id);
+  document.getElementById('modal-duration').value = entry.duration;
+  document.getElementById('modal-desc').value = entry.desc;
+  document.getElementById('edit-modal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('edit-modal').classList.remove('show');
+}
+
+function saveEdit() {
+  const entry = entries.find(e => e.id === editingId);
+  if(entry) {
+    entry.duration = document.getElementById('modal-duration').value;
+    entry.desc = document.getElementById('modal-desc').value;
+    entry.status = 'approved';
+    showToast('Entry edited and approved');
+    renderDashboardEntries();
+    renderFullEntries();
+    renderSync();
+  }
+  closeModal();
+}
+
+function approveAll() {
+  entries.forEach(e => { if(e.status === 'pending') e.status = 'approved'; });
+  showToast('All entries approved and ready to sync!');
+  renderDashboardEntries();
+  renderFullEntries();
+  renderSync();
+}
+
+function doSync() {
+  const approved = entries.filter(e => e.status === 'approved');
+  if(approved.length === 0) { showToast('No approved entries to sync'); return; }
+
+  const btn = document.querySelector('#page-sync .btn-accent');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
+  btn.disabled = true;
+
+  setTimeout(() => {
+    // Mark as synced
+    const syncList = document.getElementById('sync-entries-list');
+    syncList.querySelectorAll('.sync-check').forEach(el => {
+      el.classList.remove('pending');
+      el.classList.add('synced');
+      el.innerHTML = '<i class="fas fa-check"></i>';
+    });
+
+    document.querySelector('#page-sync .sync-icon').innerHTML = '<i class="fas fa-check"></i>';
+    document.querySelector('#page-sync .sync-icon').style.background = 'var(--accent-dim)';
+    document.querySelector('#page-sync .sync-title').textContent = `${approved.length} Entries Synced to Ghost Practice!`;
+    document.querySelector('#page-sync .sync-sub').textContent = 'Time entries have been successfully pushed to Ghost Practice. Invoices can now be generated from GP as usual.';
+    btn.innerHTML = '<i class="fas fa-check"></i> Sync Complete';
+    btn.style.background = 'var(--accent2)';
+
+    showToast(`✓ ${approved.length} entries synced to Ghost Practice!`);
+  }, 2200);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── NAVIGATION ──
+function showPage(name, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if(navEl) navEl.classList.add('active');
+
+  if(name === 'billing') renderBilling();
+  if(name === 'sync') renderSync();
+  if(name === 'matters') renderMatters();
+  if(name === 'entries') renderFullEntries();
+}
+
+// ── LOGIN ──
+function doLogin() {
+  document.getElementById('login-screen').classList.add('hidden');
+  setTimeout(() => {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    renderDashboardEntries();
+    renderTimeline();
+    renderFullEntries();
+  }, 500);
+}
+
+// ── INIT ──
+renderDashboardEntries();
+renderTimeline();
+</script>
+</body>
+</html>
